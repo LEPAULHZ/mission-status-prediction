@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
-from src.features import get_weekend, get_season, get_quarter, get_country_coord, get_matrix
+import pickle
+from src.features import get_weekend, get_season, get_quarter, get_country_coord
+from src.models import get_matrix
 
 df = pd.read_csv('../../data/raw/global_space_launches.csv')
 df.columns
@@ -124,10 +126,10 @@ df.loc[:, 'isMissionSuccess'] = (df['Status Mission'] == 'Success').astype(int)
 df['isMissionSuccess'].unique()
 
 # ======================================================
-# New DataFrame
+# New DataFrame & Handling Imbalance Manually
 # ======================================================
 # Checking original df
-df.columns, len(df.columns)
+df.columns, df.shape
 
 company_col = df.filter(like='Company_')
 df_new = df[['Rocket Cost','Rocket Cost_isna', 'isActive', 'isStateRun',
@@ -139,4 +141,38 @@ df_new = df[['Rocket Cost','Rocket Cost_isna', 'isActive', 'isStateRun',
 df_new = pd.concat([df_new, company_col], axis=1)
 
 # Checking new df
-len(df_new.columns)
+df_new.shape
+
+# Separate minority & majority class
+minority_data = df_new[~df_new['isMissionSuccess'].astype(bool)]
+majority_data = df_new[df_new['isMissionSuccess'].astype(bool)]
+
+# Get the ratio then round it up
+over_sample_ratio = int(np.ceil(len(majority_data)/len(minority_data)))
+
+# New oversampled data
+minority_data_oversample = pd.concat([minority_data] * over_sample_ratio)
+
+# Creating a whole new data set for the balanced df
+df_balanced = pd.concat([majority_data, minority_data_oversample])
+
+# Checking balanced df
+df_balanced.shape
+
+# ======================================================
+# Train & Test Split Data
+# ======================================================
+# Separate minority & majority class then sample them equally
+minority_data_sample = minority_data.sample(25, random_state=42)
+majority_data_sample = majority_data.sample(25, random_state=42)
+
+# Concat two dataframes into one train data then shuffle them
+df_test = pd.concat([minority_data_sample, majority_data_sample]).sample(frac=1, random_state=42)
+df_train = df_balanced.drop(index = df_test.index)
+
+# ======================================================
+# Save Data to Directory
+# ======================================================
+df_balanced.to_pickle('../../data/interim/balanced_data.pkl')
+df_test.to_pickle('../../data/interim/test_data.pkl')
+df_train.to_pickle('../../data/interim/train_data.pkl')
