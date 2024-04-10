@@ -27,3 +27,20 @@ def get_country_coord(country_name):
         return location.latitude, location.longitude
     else:
         return None  
+      
+
+if __name__ == "__main__":
+  import pandas as pd
+  df = pd.read_csv('../../data/raw/global_space_launches.csv')
+  df.columns
+  country = df['Companys Country of Origin']
+  unique_country = country.unique()
+  only_multi = df[df['Companys Country of Origin']=='Multi']
+  
+  unique_company_with_multi = only_multi['Company Name'].unique()
+  only_multi['Company Name'].value_counts()
+
+  
+  country_name = 'Multi'
+  coordinates = get_country_coord(country_name)
+  print(coordinates)

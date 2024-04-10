@@ -1,0 +1,11 @@
+dataset_number: 1
+master_params:
+  column_transformations:
+    StandardScaler:
+    - Year
+  random_oversampler:
+    random_state: 42
+    sampling_strategy: minority
+  train_test_split:
+    random_state: 42
+    test_size: 0.05
