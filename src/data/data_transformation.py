@@ -64,10 +64,10 @@ X_test_resampled.shape, y_test_resampled.shape
 
 columns_total = df_new.columns.tolist()
 columns_imputation = ['']
-columns_scaling = ['Year']
-columns_binary = ['']
+columns_scaling = ['Year', 'Month', 'Day', 
+                   'Company Origin Lat', 'Company Origin Long']
+columns_binary = ['Status Rocket']
 columns_ohe = []
-columns_remain = [col for col in columns_total if col not in columns_scaling]
 
 # Creating some instances for different transformers
 ohe = OneHotEncoder()
@@ -80,7 +80,8 @@ binary_pipeline = make_pipeline(binary)
 scaler_pipeline = make_pipeline(scaler)
 
 # Create columntransformer
-ct = make_column_transformer((scaler_pipeline, columns_scaling))
+ct = make_column_transformer((scaler_pipeline, columns_scaling),
+                             (binary_pipeline, columns_binary))
 
 
 transformer_columns = dict()
@@ -143,6 +144,9 @@ joblib.dump(ct, ct_file)
 # Save master_params along with dataset number and ColumnTransformer to a YAML file
 master_params_file = f'{params_dir}master_params_df_{latest_df_number}.yaml'
 
-with open(master_params_file, 'w') as f:
-    yaml.dump({'dataset_number': latest_df_number, 'master_params': master_params}, f)
+
+#----------------------------------------------------------------------------------------
+#with open(master_params_file, 'w') as f:
+#    yaml.dump({'dataset_number': latest_df_number, 'master_params': master_params}, f)
+#----------------------------------------------------------------------------------------
 

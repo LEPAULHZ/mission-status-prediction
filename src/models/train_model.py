@@ -1,17 +1,15 @@
 # Import necessary libraries
 import pandas as pd
-import csv
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
 from datetime import datetime
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, roc_auc_score
-from archive import record_metric_to_csv
 from get_matrix import decipher_confusion_matrix
-from src.logging import read_metrics_from_csv, remove_row_from_csv ,clear_csv_file
 from src.parameters.get_params import extract_values
 from src.logging.record_metrics_to_csv import record_metrics_to_csv
+from src.logging.remove_row_from_csv import remove_row_from_csv
+from src.logging.clear_csv_file import clear_csv_file
+from datetime import datetime
 import yaml
 
 # ------------------------------------------------------
@@ -54,6 +52,20 @@ X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_{latest_df_number
 y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_{latest_df_number}.pkl')
 y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_{latest_df_number}.pkl')
 
+
+
+# load in specfic master parameter ------------------------------------
+# Load the YAML file directly into a dictionary
+# with open(f'{params_dir}master_params_df_6.yaml', 'r') as yaml_file:
+#     master_params = yaml.load(yaml_file, Loader=yaml.FullLoader)
+
+# # load in specific data -----------------------------------------------
+# X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_6.pkl')
+# X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_6.pkl')
+# y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_6.pkl')
+# y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_6.pkl')
+
+
 # ------------------------------------------------------
 # Model
 # ------------------------------------------------------
@@ -68,8 +80,12 @@ model = LogisticRegression(**logreq_hyperparams)
 master_params['model'] = model.__class__.__name__
 master_params['model_hyperparameters'] = logreq_hyperparams
 
+# Add time_stamp to master_params
+time_stamp = dict(Timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+master_params['time_stamp'] = time_stamp['Timestamp']
+
 # Fit the model
-model.fit(X_train, y_train)
+model.fit(X_train, y_train.values.ravel())
 
 # Predictions
 y_test_pred = model.predict(X_test)
@@ -111,8 +127,15 @@ metric_kv_pairs = extract_values(master_params)
 metrics_df = pd.DataFrame([metric_kv_pairs])
 
 # Define the desired columns to move to the front and back
-desired_front_columns = ['dataset_number', 'model', 'accuracy_train', 'accuracy_test', 'precision_train', 'precision_test']
-desired_back_columns =  ['TN_train', 'TN_test','FP_train', 'FP_test', 'FN_train', 'FN_test', 'TP_train', 'TP_test']
+desired_front_columns = ['time_stamp','dataset_number', 'model', 
+                         'accuracy_train', 'accuracy_test', 
+                         'precision_train', 'precision_test', 
+                         'auc_train','auc_test']
+
+desired_back_columns =  ['TN_train', 'TN_test',
+                         'FP_train', 'FP_test', 
+                         'FN_train', 'FN_test', 
+                         'TP_train', 'TP_test']
 
 # Extract the middle columns
 desired_middle_columns = (metrics_df.drop(columns=(desired_front_columns + desired_back_columns))).columns.to_list()
@@ -120,23 +143,42 @@ desired_middle_columns = (metrics_df.drop(columns=(desired_front_columns + desir
 # Reorganize the metrics DataFrame with desired column order
 metrics_df = metrics_df[desired_front_columns + desired_middle_columns + desired_back_columns]
 
-
 # ------------------------------------------------------
-# Logging Metrics
+# Logging Metrics Copy
 # ------------------------------------------------------
 
 # Define file path
 csv_file_path = os.path.join('../../data/metrics', 'master_metric_log.csv')
+pickle_file_path = os.path.join('../../data/metrics', 'master_metric_log.pkl')
 
-# Record metrics to CSV
+# Read the master metrics from source and make a copy
+master_metrics_df = pd.read_pickle(pickle_file_path)
+copy_master_metrics_df = master_metrics_df.copy()
+copy_master_metrics_df.T
+
+copy_master_metrics_df.rename(columns={'Timestamp': 'time_stamp'}, inplace=True)
+
+# Perform actions on copy version
+copy_master_metrics_df = pd.concat([copy_master_metrics_df,metrics_df], ignore_index=True)
+
+
+# ------------------------------------------------------
+# Logging Metrics Actual
+# ------------------------------------------------------
+
+# Recording copy master metric to pickle file as master metrics
+#copy_master_metrics_df.to_pickle(pickle_file_path)
+#copy_master_metrics_df.to_csv(csv_file_path)
+
+# ------------------------------------------------------
+# Edit Logging Metrics csv
+# ------------------------------------------------------
 #record_metrics_to_csv(metrics_df, csv_file_path)
 
-# Read metrics from csv
-master_metrics_df = pd.DataFrame(read_metrics_from_csv.read_metrics_from_csv(csv_file_path))
-
-# Remove a specfic row from csv 
+# Remove a specfic row from csv
 #remove_row_from_csv.remove_row_from_csv(csv_file_path, #)
 
 # Clear the contents of the csv file
 #clear_csv_file.clear_csv_file(csv_file_path)
+
 
