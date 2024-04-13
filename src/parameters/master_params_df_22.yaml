@@ -1,0 +1,24 @@
+dataset_number: 22
+master_params:
+  column_transformations:
+    OneHotEncoder:
+    - Company
+    OrdinalEncoder:
+    - Status Rocket
+    - isWeekend
+    StandardScaler:
+    - Year
+    - Month
+    - Day
+    - Company Origin Lat
+    - Company Origin Long
+    - Unix Time
+    - YearSine
+  ohe_hyperparams:
+    handle_unknown: ignore
+  random_oversampler:
+    random_state: 42
+    sampling_strategy: minority
+  train_test_split:
+    random_state: 42
+    test_size: 0.05

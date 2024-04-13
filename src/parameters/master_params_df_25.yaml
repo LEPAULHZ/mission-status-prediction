@@ -1,0 +1,26 @@
+dataset_number: 24
+master_params:
+  column_transformations:
+    OrdinalEncoder:
+    - Status Rocket
+    - isWeekend
+    SimpleImputer:
+    - Rocket Cost
+    StandardScaler:
+    - Year
+    - Month
+    - Day
+    - Company Origin Lat
+    - Company Origin Long
+    - Unix Time
+    - YearSine
+  imputation_hyperparams:
+    Rocket Cost median: 59.0
+  ohe_hyperparams:
+    handle_unknown: ignore
+  random_oversampler:
+    random_state: 42
+    sampling_strategy: minority
+  train_test_split:
+    random_state: 42
+    test_size: 0.05

@@ -26,4 +26,4 @@ def get_weekend(date_feature):
     if date_obj.isna().any():
         return 'NaT'
     weekday = date_obj.dt.weekday
-    return (weekday >= 5).astype(int) # Saturday (5) or Sunday (6)
+    return (weekday >= 5) # Saturday (5) or Sunday (6)

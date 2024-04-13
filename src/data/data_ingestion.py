@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 from src.features.get_country_coord import get_country_coord
+from src.features.month_operations import get_quarter, get_season
+from src.features.get_weekend import get_weekend
 
 df = pd.read_csv('../../data/raw/global_space_launches.csv')
 df.columns
@@ -96,23 +98,78 @@ df[['Company Origin Lat','Company Origin Long']] = pd.DataFrame(df['Company Orig
 df[['Launch Country Lat','Launch Country Long']] = pd.DataFrame(df['Launch Country'].map(coord_dict).to_list(), index=df.index)
 
 # ------------------------------------------------------
-# Handling Feature
+# Handling DateTime Feature
 # ------------------------------------------------------
 
+# Convert object to Timestamp object with UTC Offset %z
+date_time_object = pd.to_datetime(df['DateTime'], format="%Y-%m-%d %H:%M:%S%z")
 
+# Convert Timestamp object to Unix timestamp (seconds since Unix epoch)
+df.loc[:,'Unix Time'] = (date_time_object - pd.Timestamp('1970-01-01', tz='UTC')).dt.total_seconds()
 
-# 'Company', 'Location', 'Detail', 'Rocket Cost',
-#        'DateTime', 'Date', 'Time'
+# ------------------------------------------------------
+# Handling Cyclical DateTime Feature
+# ------------------------------------------------------
 
+hour_seconds = 60*60
+day_seconds = hour_seconds*24
+year_seconds = day_seconds*365.25
+
+datetime_column_names = ['Hour', 'Day', 'Year']
+time_units = [hour_seconds, day_seconds, year_seconds]  
+
+for column_name, time_unit in zip(datetime_column_names, time_units):
+    df[column_name + 'Sine'] = np.sin(df['Unix Time'] * 2 * np.pi / time_unit)
+    df[column_name + 'Cosine'] = np.cos(df['Unix Time'] * 2 * np.pi / time_unit)
+
+# ------------------------------------------------------
+# Handling Month & Day Feature
+# ------------------------------------------------------
+
+df.loc[:,'Season'] = get_season(df['Date'])
+df['Season'].unique()
+
+df.loc[:, 'Quarter'] = get_quarter(df['Date'])
+df['Quarter'].unique()
+
+# ------------------------------------------------------
+# Handling Date Feature
+# ------------------------------------------------------
+
+df.loc[:,'isWeekend'] = get_weekend(df['Date'])
+df['isWeekend'].unique()
+
+# ------------------------------------------------------
+# Handling Company Categorical Feature
+# ------------------------------------------------------
+
+df['Company'].unique(), df['Company'].nunique()
+
+# ------------------------------------------------------
+# Handling missing values
+# ------------------------------------------------------
+
+df.loc[:,'Rocket Cost_isna'] = df['Rocket Cost'].isna()
+df['Rocket Cost_isna'].unique()
+
+# Convert everything to strings and delete commas (there is one that have comma)
+df.loc[:,'Rocket Cost'] = df['Rocket Cost'].astype(str).str.replace(',', '').astype(float)
+df['Rocket Cost'].isna().sum()
 
 # ------------------------------------------------------
 # New DataFrame 
 # ------------------------------------------------------
 df.columns
-drop_columns = ['Company', 'Location', 'Detail', 'Rocket Cost',
-                'Status Mission', 'DateTime', 'Date', 'Time', 'Ownership']
+drop_columns = ['Company','Location', 'Detail',
+                'Status Mission', 'Launch Country', 'Company Origin', 'Ownership',
+                'DateTime', 'Date', 'Time',
+                'Launch Country Lat', 'Launch Country Long',
+                'HourSine', 'HourCosine', 'DaySine', 'DayCosine', 'YearCosine',
+                'Season', 'Quarter', 'Rocket Cost_isna']
+
 
 df_new = df.drop(columns=drop_columns)
+df_new.columns, len(df_new.columns)
 
 # Verifying number of columns in df new
 column_number_comparison = pd.DataFrame({'df_old_col': [len(df.columns)],

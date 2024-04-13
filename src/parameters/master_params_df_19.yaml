@@ -1,0 +1,23 @@
+dataset_number: 19
+master_params:
+  column_transformations:
+    OneHotEncoder:
+    - Quarter
+    OrdinalEncoder:
+    - Status Rocket
+    StandardScaler:
+    - Year
+    - Month
+    - Day
+    - Company Origin Lat
+    - Company Origin Long
+    - Unix Time
+    - DayCosine
+    - YearSine
+    - YearCosine
+  random_oversampler:
+    random_state: 42
+    sampling_strategy: minority
+  train_test_split:
+    random_state: 42
+    test_size: 0.05

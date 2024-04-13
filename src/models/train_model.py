@@ -20,7 +20,7 @@ processed_dir = '../../data/processed/'
 params_dir = '../../src/parameters/'
 
 # load in master parameter ------------------------------------
-# Get a list of existing yaml files
+#Get a list of existing yaml files
 existing_params_files = [filename for filename in os.listdir(params_dir) if filename.endswith('.yaml')]
 
 # Extract the df_number from existing files
@@ -55,15 +55,15 @@ y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_{latest_df_number
 
 
 # load in specfic master parameter ------------------------------------
-# Load the YAML file directly into a dictionary
-# with open(f'{params_dir}master_params_df_6.yaml', 'r') as yaml_file:
+#Load the YAML file directly into a dictionary
+# with open(f'{params_dir}master_params_df_22.yaml', 'r') as yaml_file:
 #     master_params = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
 # # load in specific data -----------------------------------------------
-# X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_6.pkl')
-# X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_6.pkl')
-# y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_6.pkl')
-# y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_6.pkl')
+# X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_22.pkl')
+# X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_22.pkl')
+# y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_22.pkl')
+# y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_22.pkl')
 
 
 # ------------------------------------------------------
@@ -156,8 +156,7 @@ master_metrics_df = pd.read_pickle(pickle_file_path)
 copy_master_metrics_df = master_metrics_df.copy()
 copy_master_metrics_df.T
 
-copy_master_metrics_df.rename(columns={'Timestamp': 'time_stamp'}, inplace=True)
-
+ 
 # Perform actions on copy version
 copy_master_metrics_df = pd.concat([copy_master_metrics_df,metrics_df], ignore_index=True)
 
@@ -167,8 +166,8 @@ copy_master_metrics_df = pd.concat([copy_master_metrics_df,metrics_df], ignore_i
 # ------------------------------------------------------
 
 # Recording copy master metric to pickle file as master metrics
-#copy_master_metrics_df.to_pickle(pickle_file_path)
-#copy_master_metrics_df.to_csv(csv_file_path)
+# copy_master_metrics_df.to_pickle(pickle_file_path)
+# copy_master_metrics_df.to_csv(csv_file_path)
 
 # ------------------------------------------------------
 # Edit Logging Metrics csv

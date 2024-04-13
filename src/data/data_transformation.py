@@ -1,11 +1,14 @@
 # Import necessary libraries
 import pandas as pd
+import numpy as np
 import os
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
+from sklearn.impute import SimpleImputer
+from src.features.get_imputation import calculate_imputation
 import joblib
 import yaml
 
@@ -63,25 +66,97 @@ X_test_resampled.shape, y_test_resampled.shape
 # ------------------------------------------------------
 
 columns_total = df_new.columns.tolist()
-columns_imputation = ['']
-columns_scaling = ['Year', 'Month', 'Day', 
-                   'Company Origin Lat', 'Company Origin Long']
-columns_binary = ['Status Rocket']
+
+# Define columns for imputation, scaling, binary encoding, and one-hot encoding
+columns_imputation_mean = []
+columns_imputation_median = ['Rocket Cost']
+columns_imputation_mode = []
+columns_imputation_constant1 = []
+columns_imputation_constant0 = []
+columns_scaling = ['Year', 'Month', 'Day', 'Company Origin Lat', 'Company Origin Long', 'Unix Time', 'YearSine']
+columns_binary = ['Status Rocket', 'isWeekend']
 columns_ohe = []
 
-# Creating some instances for different transformers
-ohe = OneHotEncoder()
+# Define hyperparameters for OneHotEncoder
+ohe_hyperparams = dict(handle_unknown = 'ignore')
+ohe = OneHotEncoder(**ohe_hyperparams)
+master_params['ohe_hyperparams'] = ohe_hyperparams
+
+# Calculate imputation hyperparameters for mean
+impute_hyperparams_mean = dict()
+for col in columns_imputation_mean:
+    impute_hyperparams_mean[col] = {'strategy': 'constant', 'fill_value': calculate_imputation(col, X_train_resampled[col], 'mean')}
+    
+# Calculate imputation hyperparameters for median
+impute_hyperparams_median = dict()
+for col in columns_imputation_median:
+    impute_hyperparams_median[col] = {'strategy': 'constant', 'fill_value': calculate_imputation(col, X_train_resampled[col], 'median')}
+    
+# Calculate imputation hyperparameters for mode
+impute_hyperparams_mode = dict()
+for col in columns_imputation_mode:
+    impute_hyperparams_mode[col] = {'strategy': 'constant', 'fill_value': calculate_imputation(col, X_train_resampled[col], 'mode')}
+    
+# Calculate imputation hyperparameters for constant 1
+impute_hyperparams_constant1 = dict()
+for col in columns_imputation_constant1:
+    impute_hyperparams_constant1[col] = {'strategy': 'constant', 'fill_value': 1}
+
+# Calculate imputation hyperparameters for constant 0
+impute_hyperparams_constant0 = dict()
+for col in columns_imputation_constant0:
+    impute_hyperparams_constant0[col] = {'strategy': 'constant', 'fill_value': 0}
+
+# Aggregate imputation hyperparameters into a single dictionary
+imputer_hyperparams = dict(mean = impute_hyperparams_mean,
+                           median = impute_hyperparams_median,
+                           mode = impute_hyperparams_mode,
+                           constant1 = impute_hyperparams_constant1,
+                           constant0 = impute_hyperparams_constant0)
+
+# Log imputation hyperparameters for monitoring/logging
+imputer_values_logging = dict()
+for strategy, feature_dict in imputer_hyperparams.items():
+    if strategy == 'constant0' or strategy == 'constant1':
+        for feature, params in feature_dict.items():
+            imputer_values_logging[f'{feature} {strategy}'] = True
+    else:     
+        for feature, params in feature_dict.items():
+            if feature:
+                imputer_values_logging[f'{feature} {strategy}'] = float(params['fill_value'])
+
+# Add imputation_hyperparams to master_params
+master_params['imputation_hyperparams'] = imputer_values_logging            
+   
+            
+
+# Create SimpleImputer instances and pipelines for each column and strategy
+imputers = []
+pipelines = []
+features = []
+for strategy, feature_dict in imputer_hyperparams.items():
+    for feature, params in feature_dict.items():
+        # Create SimpleImputer instance with specified parameters
+        imputer = SimpleImputer(strategy=params['strategy'], fill_value=params['fill_value'])
+        # Create pipeline with SimpleImputer
+        pipeline = make_pipeline(imputer)
+        # Append SimpleImputer instance and pipeline to lists
+        imputers.append(imputer)
+        pipelines.append(pipeline)
+        features.append(feature)
+
+# Initialize pipelines for binary encoding and scaling
 binary = OrdinalEncoder()
 scaler = StandardScaler()
- 
-# Create preprocessing pipelines
-ohe_pipeline = make_pipeline(ohe)
+
+# Create pipelines for binary encoding and scaling
 binary_pipeline = make_pipeline(binary)
 scaler_pipeline = make_pipeline(scaler)
 
 # Create columntransformer
 ct = make_column_transformer((scaler_pipeline, columns_scaling),
-                             (binary_pipeline, columns_binary))
+                             (binary_pipeline, columns_binary),
+                             (pipelines[0], [features[0]]))
 
 
 transformer_columns = dict()
@@ -116,37 +191,42 @@ X_train_processed.shape, X_test_processed.shape
 
 # Define directories
 processed_dir = '../../data/processed/'
-transformer_dir = '../../models/transformers/'
 params_dir = '../../src/parameters/'
 
 # Convert arrays to DataFrame
+# X_train_processed_df = pd.DataFrame.sparse.from_spmatrix(X_train_processed)
+# y_train_resampled_df = pd.DataFrame(y_train_resampled)
+# X_test_processed_df = pd.DataFrame.sparse.from_spmatrix(X_test_processed)
+# y_test_resampled_df = pd.DataFrame(y_test_resampled)
+
 X_train_processed_df = pd.DataFrame(X_train_processed)
 y_train_resampled_df = pd.DataFrame(y_train_resampled)
 X_test_processed_df = pd.DataFrame(X_test_processed)
 y_test_resampled_df = pd.DataFrame(y_test_resampled)
 
-# Save as pickle files
-X_train_file = f'{processed_dir}X_train_processed_df_{latest_df_number}.pkl'
-y_train_file = f'{processed_dir}y_train_processed_df_{latest_df_number}.pkl'
-X_test_file = f'{processed_dir}X_test_processed_df_{latest_df_number}.pkl'
-y_test_file = f'{processed_dir}y_test_processed_df_{latest_df_number}.pkl'
+# Save as pickle files latest
+# X_train_file = f'{processed_dir}X_train_processed_df_{latest_df_number}.pkl'
+# y_train_file = f'{processed_dir}y_train_processed_df_{latest_df_number}.pkl'
+# X_test_file = f'{processed_dir}X_test_processed_df_{latest_df_number}.pkl'
+# y_test_file = f'{processed_dir}y_test_processed_df_{latest_df_number}.pkl'
+
+# Save as pickle files latest
+latest = 4  
+X_train_file = f'{processed_dir}X_train_processed_df_{latest_df_number+latest}.pkl'
+y_train_file = f'{processed_dir}y_train_processed_df_{latest_df_number+latest}.pkl'
+X_test_file = f'{processed_dir}X_test_processed_df_{latest_df_number+latest}.pkl'
+y_test_file = f'{processed_dir}y_test_processed_df_{latest_df_number+latest}.pkl'
 
 X_train_processed_df.to_pickle(X_train_file)
 y_train_resampled_df.to_pickle(y_train_file)
 X_test_processed_df.to_pickle(X_test_file)
 y_test_resampled_df.to_pickle(y_test_file)
 
-# Save the ColumnTransformer object
-ct_file = f'{transformer_dir}column_transformer_df_{latest_df_number}.pkl'
-joblib.dump(ct, ct_file)
-
 
 # Save master_params along with dataset number and ColumnTransformer to a YAML file
-master_params_file = f'{params_dir}master_params_df_{latest_df_number}.yaml'
-
+master_params_file = f'{params_dir}master_params_df_{latest_df_number+latest}.yaml'
 
 #----------------------------------------------------------------------------------------
-#with open(master_params_file, 'w') as f:
-#    yaml.dump({'dataset_number': latest_df_number, 'master_params': master_params}, f)
+with open(master_params_file, 'w') as f:
+   yaml.dump({'dataset_number': latest_df_number, 'master_params': master_params}, f)
 #----------------------------------------------------------------------------------------
-
