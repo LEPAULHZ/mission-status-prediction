@@ -1,27 +1,32 @@
-def process_text_column(column):
+import pandas as pd
 
-    return
+# Define a function to split and clean location columns
+def split_and_clean_location(df, num_commas):
+    # Filter rows with the specified number of commas
+    filtered_df = df[df['Location'].str.count(',') == num_commas]
+    
+    # Split the text into separate columns
+    split_df = filtered_df['Location'].str.split(',', expand=True)
+    
+    # Add empty columns if necessary
+    if num_commas == 2:
+        split_df.insert(num_commas, f'Empty Column {num_commas}', '')
+    elif num_commas == 1:
+        split_df.insert(num_commas-1, f'Empty Column {num_commas-1}', '')
+        split_df.insert(num_commas+1, f'Empty Column {num_commas+1}', '')
 
+    # Rename the columns
+    column_names = ['Pad', 'Center', 'State', 'Country']
+    split_df.columns = column_names[:split_df.shape[1]]
+    
+    # Strip whitespace from each column
+    split_df = split_df.apply(lambda x: x.str.strip())
+    
+    return split_df
 
-if __name__ == "__main__":
-    import pandas as pd
-    import numpy as np
-    
-    df = pd.read_csv('../../data/raw/global_space_launches.csv')
-    df_new = pd.DataFrame(df[['Company Name','Location']])
-    df_new['comma count'] = df_new['Location'].str.count(',')
-    df_new['comma count'].value_counts()
-    
-    df_new[df_new['comma count']==1]
-    
-    
-    comma_count = df_new['Location'].str.count(',')
-    unique_count_array = comma_count.unique()
-    test_array = []
-    for _ , each_number in enumerate(unique_count_array): 
-        test_array.append(df_new[df_new['comma count']==each_number])
-    
-    
-    test_array_header = test_array(:,0)
-    df_test = pd.DataFrame(test_array, columns = test_array[:,0])
-
+# Define a function to replace specific values in columns
+def replace_values(df):
+    df['State'] = df['State'].str.replace('Maranh?œo', 'Maranhao')
+    df['Center'] = df['Center'].str.replace('Alc?›ntara Launch Center', 'Alcantara Space Center')
+    df['Center'] = df['Center'].str.replace('M?\x81hia Peninsula', 'Mahia Peninsula')
+    return df

@@ -4,6 +4,7 @@ import os
 from src.features.get_country_coord import get_country_coord
 from src.features.month_operations import get_quarter, get_season
 from src.features.get_weekend import get_weekend
+from src.features.process_text_column import split_and_clean_location, replace_values
 
 df = pd.read_csv('../../data/raw/global_space_launches.csv')
 df.columns
@@ -157,6 +158,65 @@ df.loc[:,'Rocket Cost'] = df['Rocket Cost'].astype(str).str.replace(',', '').ast
 df['Rocket Cost'].isna().sum()
 
 # ------------------------------------------------------
+# Handling Location Text Feature
+# ------------------------------------------------------
+
+# Split and clean for each number of commas
+df_3commas_split = split_and_clean_location(df, 3)
+df_2commas_split = split_and_clean_location(df, 2)
+df_1commas_split = split_and_clean_location(df, 1)
+
+# Replace specific values
+df_3commas_split = replace_values(df_3commas_split)
+df_2commas_split = replace_values(df_2commas_split)
+df_1commas_split = replace_values(df_1commas_split)
+
+# Update values based on conditions
+# Update values for df_3commas_split
+df_3commas_split.loc[df_3commas_split['Pad'] == 'Blue Origin Launch Site', 'Center'] = 'Blue Origin Launch Site'
+df_3commas_split.loc[df_3commas_split['Pad'] == 'Blue Origin Launch Site', 'Pad'] = ''
+# Update values for df_2commas_split
+df_2commas_split.loc[df_2commas_split['Country'] == 'New Mexico', 'State'] = 'New Mexico'
+df_2commas_split.loc[df_2commas_split['Country'] == 'New Mexico', 'Country'] = 'USA'
+df_2commas_split.loc[df_2commas_split['Country'] == 'Pacific Missile Range Facility', 'Center'] = 'Pacific Missile Range Facility'
+df_2commas_split.loc[df_2commas_split['Country'] == 'Pacific Missile Range Facility', 'State'] = 'Hawaii'
+df_2commas_split.loc[df_2commas_split['Country'] == 'Pacific Missile Range Facility', 'Country'] = 'USA'
+# Update values for df_1commas_split
+df_1commas_split.loc[df_1commas_split['Center'] == 'Launch Plateform', 'Pad'] = 'Launch Platform'
+df_1commas_split.loc[df_1commas_split['Country'] == 'Shahrud Missile Test Site', 'Center'] = 'Shahrud Missile Test Site'
+df_1commas_split.loc[df_1commas_split['Country'] == 'Shahrud Missile Test Site', 'Country'] = 'Iran'
+
+df_text1 = pd.concat([df_3commas_split, df_2commas_split, df_1commas_split]).sort_index()
+
+df = pd.concat([df, df_text1], axis=1)
+df_copy = df[['Location', 'Pad', 'Center', 'State', 'Country', 'Launch Country']]
+
+df_copy['equal'] = np.where(df_copy['Country'] == df_copy['Launch Country'], True, False)
+df_copy[df_copy['equal'] == False]
+
+# Original 'Launch Country' feature represents the new 'Country' so ot can be excluded 'Country'
+
+df_copy['Pad'].unique(), df_copy['Pad'].nunique()
+
+
+# ------------------------------------------------------
+# Handling Detail Text Feature
+# ------------------------------------------------------
+
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+# Initialize TfidfVectorizer with optional parameters
+tfidf_vectorizer = TfidfVectorizer()
+
+# Fit and transform the documents to compute TF-IDF
+tfidf_matrix = tfidf_vectorizer.fit_transform(df['Detail'])
+
+# Get the feature names (words) from the TF-IDF vectorizer
+feature_names = tfidf_vectorizer.get_feature_names_out()
+tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
+
+
+# ------------------------------------------------------
 # New DataFrame 
 # ------------------------------------------------------
 df.columns
@@ -165,7 +225,8 @@ drop_columns = ['Company','Location', 'Detail',
                 'DateTime', 'Date', 'Time',
                 'Launch Country Lat', 'Launch Country Long',
                 'HourSine', 'HourCosine', 'DaySine', 'DayCosine', 'YearCosine',
-                'Season', 'Quarter', 'Rocket Cost_isna']
+                'Season', 'Quarter', 'Rocket Cost_isna',
+                'Pad', 'Center', 'State', 'Country']
 
 
 df_new = df.drop(columns=drop_columns)

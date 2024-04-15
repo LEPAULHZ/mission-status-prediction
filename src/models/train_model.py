@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, roc_auc_score
-from get_matrix import decipher_confusion_matrix
+from src.models.get_matrix import decipher_confusion_matrix
 from src.parameters.get_params import extract_values
 from src.logging.record_metrics_to_csv import record_metrics_to_csv
 from src.logging.remove_row_from_csv import remove_row_from_csv

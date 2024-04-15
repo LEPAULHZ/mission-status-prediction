@@ -152,7 +152,8 @@ scaler = StandardScaler()
 # Create pipelines for binary encoding and scaling
 binary_pipeline = make_pipeline(binary)
 scaler_pipeline = make_pipeline(scaler)
-
+ohe_pipeline = make_pipeline(ohe)
+# ohe_pipeline, columns_ohe
 # Create columntransformer
 ct = make_column_transformer((scaler_pipeline, columns_scaling),
                              (binary_pipeline, columns_binary),
@@ -193,6 +194,20 @@ X_train_processed.shape, X_test_processed.shape
 processed_dir = '../../data/processed/'
 params_dir = '../../src/parameters/'
 
+# Get a list of existing pickle files
+existing_files_processed = [filename for filename in os.listdir(processed_dir) if filename.endswith('.pkl')]
+# Extract the df_number from existing files
+existing_processed_numbers = [int(filename.split('_')[4].split('.')[0]) for filename in existing_files_processed]
+# Determine the highest df_number
+latest_processed_number = max(existing_processed_numbers, default=0) + 1
+
+# Get a list of existing pickle files
+existing_files_params = [filename for filename in os.listdir(params_dir) if filename.endswith('.yaml')]
+# Extract the df_number from existing files
+existing_params_numbers = [int(filename.split('_')[3].split('.')[0]) for filename in existing_files_params]
+# Determine the highest df_number
+latest_params_number = max(existing_params_numbers, default=0) + 1
+
 # Convert arrays to DataFrame
 # X_train_processed_df = pd.DataFrame.sparse.from_spmatrix(X_train_processed)
 # y_train_resampled_df = pd.DataFrame(y_train_resampled)
@@ -205,28 +220,18 @@ X_test_processed_df = pd.DataFrame(X_test_processed)
 y_test_resampled_df = pd.DataFrame(y_test_resampled)
 
 # Save as pickle files latest
-# X_train_file = f'{processed_dir}X_train_processed_df_{latest_df_number}.pkl'
-# y_train_file = f'{processed_dir}y_train_processed_df_{latest_df_number}.pkl'
-# X_test_file = f'{processed_dir}X_test_processed_df_{latest_df_number}.pkl'
-# y_test_file = f'{processed_dir}y_test_processed_df_{latest_df_number}.pkl'
+# X_train_file = f'{processed_dir}X_train_processed_df_{latest_processed_number}.pkl'
+# y_train_file = f'{processed_dir}y_train_processed_df_{latest_processed_number}.pkl'
+# X_test_file = f'{processed_dir}X_test_processed_df_{latest_processed_number}.pkl'
+# y_test_file = f'{processed_dir}y_test_processed_df_{latest_processed_number}.pkl'
 
-# Save as pickle files latest
-latest = 4  
-X_train_file = f'{processed_dir}X_train_processed_df_{latest_df_number+latest}.pkl'
-y_train_file = f'{processed_dir}y_train_processed_df_{latest_df_number+latest}.pkl'
-X_test_file = f'{processed_dir}X_test_processed_df_{latest_df_number+latest}.pkl'
-y_test_file = f'{processed_dir}y_test_processed_df_{latest_df_number+latest}.pkl'
+# X_train_processed_df.to_pickle(X_train_file)
+# y_train_resampled_df.to_pickle(y_train_file)
+# X_test_processed_df.to_pickle(X_test_file)
+# y_test_resampled_df.to_pickle(y_test_file)
 
-X_train_processed_df.to_pickle(X_train_file)
-y_train_resampled_df.to_pickle(y_train_file)
-X_test_processed_df.to_pickle(X_test_file)
-y_test_resampled_df.to_pickle(y_test_file)
-
-
-# Save master_params along with dataset number and ColumnTransformer to a YAML file
-master_params_file = f'{params_dir}master_params_df_{latest_df_number+latest}.yaml'
 
 #----------------------------------------------------------------------------------------
-with open(master_params_file, 'w') as f:
-   yaml.dump({'dataset_number': latest_df_number, 'master_params': master_params}, f)
+# with open(master_params_file, 'w') as f:
+#    yaml.dump({'dataset_number': latest_df_number, 'master_params': master_params}, f)
 #----------------------------------------------------------------------------------------
