@@ -1,6 +1,5 @@
 # Import necessary libraries
 import pandas as pd
-import numpy as np
 import os
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import RandomOverSampler
@@ -9,7 +8,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.impute import SimpleImputer
 from src.features.get_imputation import calculate_imputation
-import joblib
 import yaml
 
 # Set the option to opt-in to the future behavior
@@ -75,7 +73,7 @@ columns_imputation_constant1 = []
 columns_imputation_constant0 = []
 columns_scaling = ['Year', 'Month', 'Day', 'Company Origin Lat', 'Company Origin Long', 'Unix Time', 'YearSine']
 columns_binary = ['Status Rocket', 'isWeekend']
-columns_ohe = []
+columns_ohe = ['State']
 
 # Define hyperparameters for OneHotEncoder
 ohe_hyperparams = dict(handle_unknown = 'ignore')
@@ -129,11 +127,9 @@ for strategy, feature_dict in imputer_hyperparams.items():
 master_params['imputation_hyperparams'] = imputer_values_logging            
    
             
-
 # Create SimpleImputer instances and pipelines for each column and strategy
-imputers = []
-pipelines = []
-features = []
+imputer_pipelines = []
+columns_imputer = []
 for strategy, feature_dict in imputer_hyperparams.items():
     for feature, params in feature_dict.items():
         # Create SimpleImputer instance with specified parameters
@@ -141,9 +137,8 @@ for strategy, feature_dict in imputer_hyperparams.items():
         # Create pipeline with SimpleImputer
         pipeline = make_pipeline(imputer)
         # Append SimpleImputer instance and pipeline to lists
-        imputers.append(imputer)
-        pipelines.append(pipeline)
-        features.append(feature)
+        imputer_pipelines.append(pipeline)
+        columns_imputer.append(feature)
 
 # Initialize pipelines for binary encoding and scaling
 binary = OrdinalEncoder()
@@ -153,15 +148,15 @@ scaler = StandardScaler()
 binary_pipeline = make_pipeline(binary)
 scaler_pipeline = make_pipeline(scaler)
 ohe_pipeline = make_pipeline(ohe)
-# ohe_pipeline, columns_ohe
+
 # Create columntransformer
 ct = make_column_transformer((scaler_pipeline, columns_scaling),
                              (binary_pipeline, columns_binary),
-                             (pipelines[0], [features[0]]))
-
+                             (imputer_pipelines[0], [columns_imputer[0]]),
+                             (ohe_pipeline, columns_ohe)
+                             )
 
 transformer_columns = dict()
-
 # Iterate over transformers in the ColumnTransformer
 for i, (name, transformer, columns) in enumerate(ct.transformers):
     # If transformer is a pipeline, get the last step (which is the actual transformer)
@@ -172,11 +167,16 @@ for i, (name, transformer, columns) in enumerate(ct.transformers):
     transformer_name = transformer.__class__.__name__
     
     # Add transformer name and associated columns to the dictionary
-    transformer_columns[transformer_name] = columns
+    if transformer_name not in transformer_columns:
+        transformer_columns[transformer_name] = columns
 
+    else:
+        # If transformer name already exists in the dictionary, extend the columns list
+        transformer_columns[transformer_name].extend(columns)
+
+    
 # Add column_transformations to master_params
 master_params['column_transformations'] = transformer_columns
-
 
 # ------------------------------------------------------
 # Apply to training and testing set
@@ -209,11 +209,6 @@ existing_params_numbers = [int(filename.split('_')[3].split('.')[0]) for filenam
 latest_params_number = max(existing_params_numbers, default=0) + 1
 
 # Convert arrays to DataFrame
-# X_train_processed_df = pd.DataFrame.sparse.from_spmatrix(X_train_processed)
-# y_train_resampled_df = pd.DataFrame(y_train_resampled)
-# X_test_processed_df = pd.DataFrame.sparse.from_spmatrix(X_test_processed)
-# y_test_resampled_df = pd.DataFrame(y_test_resampled)
-
 X_train_processed_df = pd.DataFrame(X_train_processed)
 y_train_resampled_df = pd.DataFrame(y_train_resampled)
 X_test_processed_df = pd.DataFrame(X_test_processed)
@@ -230,6 +225,8 @@ y_test_resampled_df = pd.DataFrame(y_test_resampled)
 # X_test_processed_df.to_pickle(X_test_file)
 # y_test_resampled_df.to_pickle(y_test_file)
 
+# Save master_params along with dataset number and ColumnTransformer to a YAML file
+master_params_file = f'{params_dir}master_params_df_{latest_processed_number}.yaml'
 
 #----------------------------------------------------------------------------------------
 # with open(master_params_file, 'w') as f:

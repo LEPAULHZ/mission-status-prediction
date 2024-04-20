@@ -1,3 +1,4 @@
+# Import necessary libraries
 import pandas as pd
 import numpy as np
 import os
@@ -174,7 +175,7 @@ df_1commas_split = replace_values(df_1commas_split)
 # Update values based on conditions
 # Update values for df_3commas_split
 df_3commas_split.loc[df_3commas_split['Pad'] == 'Blue Origin Launch Site', 'Center'] = 'Blue Origin Launch Site'
-df_3commas_split.loc[df_3commas_split['Pad'] == 'Blue Origin Launch Site', 'Pad'] = ''
+df_3commas_split.loc[df_3commas_split['Pad'] == 'Blue Origin Launch Site', 'Pad'] = 'missing'
 # Update values for df_2commas_split
 df_2commas_split.loc[df_2commas_split['Country'] == 'New Mexico', 'State'] = 'New Mexico'
 df_2commas_split.loc[df_2commas_split['Country'] == 'New Mexico', 'Country'] = 'USA'
@@ -189,7 +190,7 @@ df_1commas_split.loc[df_1commas_split['Country'] == 'Shahrud Missile Test Site',
 df_text1 = pd.concat([df_3commas_split, df_2commas_split, df_1commas_split]).sort_index()
 
 df = pd.concat([df, df_text1], axis=1)
-df_copy = df[['Location', 'Pad', 'Center', 'State', 'Country', 'Launch Country']]
+df_copy = df[['Location', 'Pad', 'Center', 'State', 'Country', 'Launch Country']].copy()
 
 df_copy['equal'] = np.where(df_copy['Country'] == df_copy['Launch Country'], True, False)
 df_copy[df_copy['equal'] == False]
@@ -197,24 +198,58 @@ df_copy[df_copy['equal'] == False]
 # Original 'Launch Country' feature represents the new 'Country' so ot can be excluded 'Country'
 
 df_copy['Pad'].unique(), df_copy['Pad'].nunique()
-
+df_copy['State'].unique(), df_copy['State'].nunique()
+df_copy['Country'].unique(), df_copy['Country'].nunique()
+df_copy['Center'].unique(), df_copy['Center'].nunique()
 
 # ------------------------------------------------------
-# Handling Detail Text Feature
+# Handling Detail Text Feature Work in Progress....
 # ------------------------------------------------------
-
-
 from sklearn.feature_extraction.text import TfidfVectorizer
-# Initialize TfidfVectorizer with optional parameters
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+# Assuming df_detail is your DataFrame containing the 'Detail' column
+df_detail = df['Detail'].copy()
+
+# Split the text into separate columns based on the '|' character
+split_text = df_detail.str.split(' \| ', expand=True)
+split_text.columns = ['Mission', 'Payload']  # Rename the columns if needed
+
+split_text = pd.DataFrame(split_text)
+
+# Use TF-IDF to convert the payload text into numerical features
 tfidf_vectorizer = TfidfVectorizer()
+tfidf_matrix = tfidf_vectorizer.fit_transform(split_text['Payload'])
 
-# Fit and transform the documents to compute TF-IDF
-tfidf_matrix = tfidf_vectorizer.fit_transform(df['Detail'])
+# Convert the TF-IDF matrix to a DataFrame for visualization
+tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
 
-# Get the feature names (words) from the TF-IDF vectorizer
-feature_names = tfidf_vectorizer.get_feature_names_out()
-tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
+# Find columns with all zeros
+zero_cols = tfidf_df.columns[(tfidf_df == 0).all()]
 
+# Drop columns with all zeros
+tfidf_df_cleaned = tfidf_df.drop(columns=zero_cols)
+
+# Standardize the features by removing the mean and scaling to unit variance
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(tfidf_df_cleaned)
+
+# Initialize PCA with the desired number of components
+num_components = 10  # Adjust as needed
+pca = PCA(n_components=num_components)
+
+# Fit PCA to the scaled data
+pca.fit(X_scaled)
+
+# Transform the data into the new coordinate system
+X_pca = pca.transform(X_scaled)
+
+X_pca.shape
+
+# Optionally, you can access the principal components and explained variance ratio
+principal_components = pca.components_  # Principal axes in feature space
+explained_variance_ratio = pca.explained_variance_ratio_  
 
 # ------------------------------------------------------
 # New DataFrame 

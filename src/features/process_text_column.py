@@ -10,10 +10,10 @@ def split_and_clean_location(df, num_commas):
     
     # Add empty columns if necessary
     if num_commas == 2:
-        split_df.insert(num_commas, f'Empty Column {num_commas}', '')
+        split_df.insert(num_commas, f'Empty Column {num_commas}', 'missing')
     elif num_commas == 1:
-        split_df.insert(num_commas-1, f'Empty Column {num_commas-1}', '')
-        split_df.insert(num_commas+1, f'Empty Column {num_commas+1}', '')
+        split_df.insert(num_commas-1, f'Empty Column {num_commas-1}', 'missing')
+        split_df.insert(num_commas+1, f'Empty Column {num_commas+1}', 'missing')
 
     # Rename the columns
     column_names = ['Pad', 'Center', 'State', 'Country']

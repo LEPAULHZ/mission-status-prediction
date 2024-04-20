@@ -38,21 +38,21 @@ with open(latest_params_file, 'r') as yaml_file:
 
 # load in data -----------------------------------------------
 # Get a list of existing pickle files
-existing_df_files = [filename for filename in os.listdir(processed_dir) if filename.endswith('.pkl')]
+existing_processed_files = [filename for filename in os.listdir(processed_dir) if filename.endswith('.pkl')]
 
 # Extract the df_number from existing files
-existing_df_numbers = [int(filename.split('_')[4].split('.')[0]) for filename in existing_df_files]
+existing_processed_numbers = [int(filename.split('_')[4].split('.')[0]) for filename in existing_processed_files]
 
 # Determine the highest df_number
-latest_df_number = max(existing_df_numbers, default=0)
+latest_processed_number = max(existing_processed_numbers, default=0)
 
 # Load the DataFrame with the latest df_number
-X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_{latest_df_number}.pkl')
-X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_{latest_df_number}.pkl')
-y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_{latest_df_number}.pkl')
-y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_{latest_df_number}.pkl')
+X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_{latest_processed_number}.pkl')
+X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_{latest_processed_number}.pkl')
+y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_{latest_processed_number}.pkl')
+y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_{latest_processed_number}.pkl')
 
-
+(X_test == '').sum()
 
 # load in specfic master parameter ------------------------------------
 #Load the YAML file directly into a dictionary
