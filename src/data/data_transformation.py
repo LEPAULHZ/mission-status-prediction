@@ -35,9 +35,19 @@ df_new = pd.read_pickle(f'{interim_dir}dataframe_{latest_df_number}.pkl')
 # ------------------------------------------------------
 # Preprocess
 # ------------------------------------------------------
+drop_columns = ['Company','Location', 'Detail',
+                'Status Mission', 'Launch Country', 'Company Origin', 'Ownership',
+                'DateTime', 'Date', 'Time',
+                'Launch Country Lat', 'Launch Country Long',
+                'HourSine', 'HourCosine', 'DaySine', 'DayCosine', 'YearCosine',
+                'Season', 'Quarter', 'Rocket Cost_isna',
+                'Pad', 'Center', 'State', 'Country']
 
-X = df_new.drop(columns=['isMissionSuccess'])
-y = df_new['isMissionSuccess']
+df_new_columns = df_new.drop(columns=drop_columns)
+df_new_columns.columns, len(df_new_columns.columns)
+
+X = df_new_columns.drop(columns=['isMissionSuccess'])
+y = df_new_columns['isMissionSuccess']
 
 # Creating a master parameter dictionary
 master_params = dict()
@@ -63,7 +73,7 @@ X_test_resampled.shape, y_test_resampled.shape
 # Define transformers 
 # ------------------------------------------------------
 
-columns_total = df_new.columns.tolist()
+columns_total = df_new_columns.columns.tolist()
 
 # Define columns for imputation, scaling, binary encoding, and one-hot encoding
 columns_imputation_mean = []
