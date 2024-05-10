@@ -20,17 +20,19 @@ def setup_plotting():
     plt.rcParams["figure.dpi"] = 100
 
 # Utility function to save plots
-def save_plot(ax, title):
-    safe_title = title.replace(' ', '_').replace(':', '').replace(',', '').replace('/', '').replace('\\', '')
-    filename = f"{safe_title}.png"
-    
-    # Define the path to save the figure
-    figures_path = '../../reports/figures/'
-    if not os.path.exists(figures_path):
-        os.makedirs(figures_path)
-    
-    full_path = os.path.join(figures_path, filename)
-    
-    # Save the plot
-    ax.figure.savefig(full_path)
+def save_plot(ax, title, save=False):
+    if save:
+        safe_title = title.replace(' ', '_').replace(':', '').replace(',', '').replace('/', '').replace('\\', '')
+        filename = f"{safe_title}.png"
+        
+        # Define the path to save the figure
+        figures_path = '../../reports/figures/'
+        if not os.path.exists(figures_path):
+            os.makedirs(figures_path)
+        
+        full_path = os.path.join(figures_path, filename)
+        
+        # Save the plot
+        ax.figure.savefig(full_path)
+
 
