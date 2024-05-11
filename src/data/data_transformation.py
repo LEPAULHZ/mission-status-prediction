@@ -41,7 +41,7 @@ drop_columns = ['Company','Location', 'Detail',
                 'Launch Country Lat', 'Launch Country Long',
                 'HourSine', 'HourCosine', 'DaySine', 'DayCosine', 'YearCosine',
                 'Season', 'Quarter', 'Rocket Cost_isna',
-                'Pad', 'Center', 'State', 'Country']
+                'Pad', 'Center', 'State', 'Country', 'Rocket', 'Mission']
 
 df_new_columns = df_new.drop(columns=drop_columns)
 df_new_columns.columns, len(df_new_columns.columns)
@@ -83,7 +83,7 @@ columns_imputation_constant1 = []
 columns_imputation_constant0 = []
 columns_scaling = ['Year', 'Month', 'Day', 'Company Origin Lat', 'Company Origin Long', 'Unix Time', 'YearSine']
 columns_binary = ['Status Rocket', 'isWeekend']
-columns_ohe = ['State']
+columns_ohe = []
 
 # Define hyperparameters for OneHotEncoder
 ohe_hyperparams = dict(handle_unknown = 'ignore')
