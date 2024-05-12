@@ -19,51 +19,51 @@ import yaml
 processed_dir = '../../data/processed/'
 params_dir = '../../src/parameters/'
 
-# load in master parameter ------------------------------------
-#Get a list of existing yaml files
-existing_params_files = [filename for filename in os.listdir(params_dir) if filename.endswith('.yaml')]
+# # load in master parameter ------------------------------------
+# #Get a list of existing yaml files
+# existing_params_files = [filename for filename in os.listdir(params_dir) if filename.endswith('.yaml')]
 
-# Extract the df_number from existing files
-existing_params_numbers = [int(filename.split('_')[3].split('.')[0]) for filename in existing_params_files]
+# # Extract the df_number from existing files
+# existing_params_numbers = [int(filename.split('_')[3].split('.')[0]) for filename in existing_params_files]
 
-# Determine the highest df_number
-latest_params_number = max(existing_params_numbers, default=0)
+# # Determine the highest df_number
+# latest_params_number = max(existing_params_numbers, default=0)
 
-# Construct the filename for the latest YAML file
-latest_params_file = f'{params_dir}master_params_df_{latest_params_number}.yaml'
+# # Construct the filename for the latest YAML file
+# latest_params_file = f'{params_dir}master_params_df_{latest_params_number}.yaml'
 
-# Load the YAML file directly into a dictionary
-with open(latest_params_file, 'r') as yaml_file:
-    master_params = yaml.load(yaml_file, Loader=yaml.FullLoader)
-
-# load in data -----------------------------------------------
-# Get a list of existing pickle files
-existing_processed_files = [filename for filename in os.listdir(processed_dir) if filename.endswith('.pkl')]
-
-# Extract the df_number from existing files
-existing_processed_numbers = [int(filename.split('_')[4].split('.')[0]) for filename in existing_processed_files]
-
-# Determine the highest df_number
-latest_processed_number = max(existing_processed_numbers, default=0)
-
-# Load the DataFrame with the latest df_number
-X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_{latest_processed_number}.pkl')
-X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_{latest_processed_number}.pkl')
-y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_{latest_processed_number}.pkl')
-y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_{latest_processed_number}.pkl')
-
-(X_test == '').sum()
-
-# load in specfic master parameter ------------------------------------
-#Load the YAML file directly into a dictionary
-# with open(f'{params_dir}master_params_df_22.yaml', 'r') as yaml_file:
+# # Load the YAML file directly into a dictionary
+# with open(latest_params_file, 'r') as yaml_file:
 #     master_params = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
-# # load in specific data -----------------------------------------------
-# X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_22.pkl')
-# X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_22.pkl')
-# y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_22.pkl')
-# y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_22.pkl')
+# # load in data -----------------------------------------------
+# # Get a list of existing pickle files
+# existing_processed_files = [filename for filename in os.listdir(processed_dir) if filename.endswith('.pkl')]
+
+# # Extract the df_number from existing files
+# existing_processed_numbers = [int(filename.split('_')[4].split('.')[0]) for filename in existing_processed_files]
+
+# # Determine the highest df_number
+# latest_processed_number = max(existing_processed_numbers, default=0)
+
+# Load the DataFrame with the latest df_number
+# X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_{latest_processed_number}.pkl')
+# X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_{latest_processed_number}.pkl')
+# y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_{latest_processed_number}.pkl')
+# y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_{latest_processed_number}.pkl')
+
+
+
+# load in specfic master parameter ------------------------------------
+# Load the YAML file directly into a dictionary
+with open(f'{params_dir}master_params_df_25.yaml', 'r') as yaml_file:
+    master_params = yaml.load(yaml_file, Loader=yaml.FullLoader)
+
+# load in specific data -----------------------------------------------
+X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_25.pkl')
+X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_25.pkl')
+y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_25.pkl')
+y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_25.pkl')
 
 
 # ------------------------------------------------------
@@ -86,6 +86,14 @@ master_params['time_stamp'] = time_stamp['Timestamp']
 
 # Fit the model
 model.fit(X_train, y_train.values.ravel())
+
+# Get the coefficients and intercept
+coefficients = model.coef_[0]
+intercept = model.intercept_[0]
+features = X_train.columns
+
+# Create a DataFrame to store coefficients and intercept
+coefficients_df = pd.DataFrame({'Feature': features, 'Coefficient': coefficients, 'Intercept': intercept})
 
 # Predictions
 y_test_pred = model.predict(X_test)
@@ -159,6 +167,7 @@ copy_master_metrics_df.T
  
 # Perform actions on copy version
 copy_master_metrics_df = pd.concat([copy_master_metrics_df,metrics_df], ignore_index=True)
+copy_master_metrics_df.iloc[-1].to_frame()
 
 
 # ------------------------------------------------------

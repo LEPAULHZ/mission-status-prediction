@@ -219,9 +219,9 @@ existing_params_numbers = [int(filename.split('_')[3].split('.')[0]) for filenam
 latest_params_number = max(existing_params_numbers, default=0) + 1
 
 # Convert arrays to DataFrame
-X_train_processed_df = pd.DataFrame(X_train_processed)
+X_train_processed_df = pd.DataFrame(X_train_processed, columns=X_train_resampled.columns)
 y_train_resampled_df = pd.DataFrame(y_train_resampled)
-X_test_processed_df = pd.DataFrame(X_test_processed)
+X_test_processed_df = pd.DataFrame(X_test_processed, columns=X_test_resampled.columns)
 y_test_resampled_df = pd.DataFrame(y_test_resampled)
 
 # Save as pickle files latest
