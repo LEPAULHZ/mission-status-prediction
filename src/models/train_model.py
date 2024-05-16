@@ -10,61 +10,31 @@ from src.logging.record_metrics_to_csv import record_metrics_to_csv
 from src.logging.remove_row_from_csv import remove_row_from_csv
 from src.logging.clear_csv_file import clear_csv_file
 from datetime import datetime
+import src.utilities.data_management as manage
 import yaml
 
 # ------------------------------------------------------
 # Load Data
 # ------------------------------------------------------
-# Directory where pickle files are stored
-processed_dir = '../../data/processed/'
-params_dir = '../../src/parameters/'
 
-# # load in master parameter ------------------------------------
-# #Get a list of existing yaml files
-# existing_params_files = [filename for filename in os.listdir(params_dir) if filename.endswith('.yaml')]
-
-# # Extract the df_number from existing files
-# existing_params_numbers = [int(filename.split('_')[3].split('.')[0]) for filename in existing_params_files]
-
-# # Determine the highest df_number
-# latest_params_number = max(existing_params_numbers, default=0)
-
-# # Construct the filename for the latest YAML file
-# latest_params_file = f'{params_dir}master_params_df_{latest_params_number}.yaml'
-
-# # Load the YAML file directly into a dictionary
-# with open(latest_params_file, 'r') as yaml_file:
-#     master_params = yaml.load(yaml_file, Loader=yaml.FullLoader)
-
-# # load in data -----------------------------------------------
-# # Get a list of existing pickle files
-# existing_processed_files = [filename for filename in os.listdir(processed_dir) if filename.endswith('.pkl')]
-
-# # Extract the df_number from existing files
-# existing_processed_numbers = [int(filename.split('_')[4].split('.')[0]) for filename in existing_processed_files]
-
-# # Determine the highest df_number
-# latest_processed_number = max(existing_processed_numbers, default=0)
-
-# Load the DataFrame with the latest df_number
-# X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_{latest_processed_number}.pkl')
-# X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_{latest_processed_number}.pkl')
-# y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_{latest_processed_number}.pkl')
-# y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_{latest_processed_number}.pkl')
+load_params_dir = '../../src/parameters/'
+load_base_filename_params = 'master_params_df'
+load_file_extension_params = '.yaml'
+load_file_number_params = 25
+master_params = manage.load_from_file(load_params_dir, load_base_filename_params, load_file_extension_params, load_file_number_params)
 
 
-
-# load in specfic master parameter ------------------------------------
-# Load the YAML file directly into a dictionary
-with open(f'{params_dir}master_params_df_25.yaml', 'r') as yaml_file:
-    master_params = yaml.load(yaml_file, Loader=yaml.FullLoader)
-
-# load in specific data -----------------------------------------------
-X_test = pd.read_pickle(f'{processed_dir}X_test_processed_df_25.pkl')
-X_train = pd.read_pickle(f'{processed_dir}X_train_processed_df_25.pkl')
-y_test = pd.read_pickle(f'{processed_dir}y_test_processed_df_25.pkl')
-y_train = pd.read_pickle(f'{processed_dir}y_train_processed_df_25.pkl')
-
+load_processed_dir = '../../data/processed/'
+load_base_filenames_processed = ['X_test_processed_df', 
+                                 'X_train_processed_df', 
+                                 'y_test_processed_df', 
+                                 'y_train_processed_df']
+load_file_extension_processed = '.pkl'
+load_file_number_processed = 25
+X_test = manage.load_from_file(load_processed_dir, load_base_filenames_processed[0], load_file_extension_processed, load_file_number_processed)
+X_train = manage.load_from_file(load_processed_dir, load_base_filenames_processed[1], load_file_extension_processed, load_file_number_processed)
+y_test = manage.load_from_file(load_processed_dir, load_base_filenames_processed[2], load_file_extension_processed, load_file_number_processed)
+y_train = manage.load_from_file(load_processed_dir, load_base_filenames_processed[3], load_file_extension_processed, load_file_number_processed)
 
 # ------------------------------------------------------
 # Model

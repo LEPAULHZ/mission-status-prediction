@@ -1,11 +1,11 @@
 # Import necessary libraries
 import pandas as pd
 import numpy as np
-import os
 from src.features.get_country_coord import get_country_coord
 from src.features.month_operations import get_quarter, get_season
 from src.features.get_weekend import get_weekend
 from src.features.process_text_column import split_and_clean_location, replace_values
+import src.utilities.data_management as manage
 
 df = pd.read_csv('../../data/raw/global_space_launches.csv')
 df.columns
@@ -221,26 +221,17 @@ df = pd.concat([df, df_text2], axis=1)
 # New DataFrame 
 # ------------------------------------------------------
 df.columns, len(df.columns)
-
 df_new = df.copy()
 
 # ------------------------------------------------------
 # Save Data to Directory
 # ------------------------------------------------------
+save_directory = '../../data/interim/'
+save_base_filename = 'dataframe'
+save_file_extension = '.pkl'
+save_file_number = None
 
-# Directory where pickle files are stored
-interim_dir = '../../data/interim/'
-
-# Get a list of existing pickle files
-existing_files = [filename for filename in os.listdir(interim_dir) if filename.endswith('.pkl')]
-
-# Extract the df_number from existing files
-existing_df_numbers = [int(filename.split('_')[1].split('.')[0]) for filename in existing_files]
-
-# Determine the next available df_number
-next_df_number = max(existing_df_numbers, default=0) + 1
-
-# Use the next available df_number
 #---------------------------------------------------------------
-# df_new.to_pickle(f'{interim_dir}dataframe_{next_df_number}.pkl')
+#manage.save_to_file(df_new, save_directory, save_base_filename, save_file_extension, save_file_number)
 #---------------------------------------------------------------
+

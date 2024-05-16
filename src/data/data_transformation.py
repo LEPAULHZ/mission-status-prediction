@@ -1,6 +1,5 @@
 # Import necessary libraries
 import pandas as pd
-import os
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.compose import make_column_transformer
@@ -8,29 +7,20 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.impute import SimpleImputer
 from src.features.get_imputation import calculate_imputation
-import yaml
+import src.utilities.data_management as manage
 
 # Set the option to opt-in to the future behavior
 pd.set_option('future.no_silent_downcasting', True)
 
 # ------------------------------------------------------
-# Load Data 
+# Load Data from Directory
 # ------------------------------------------------------
+load_directory = '../../data/interim/'
+load_base_filename = 'dataframe' 
+load_file_extension = '.pkl'
+load_file_number = None
 
-# Directory where pickle files are stored
-interim_dir = '../../data/interim/'
-
-# Get a list of existing pickle files
-existing_files = [filename for filename in os.listdir(interim_dir) if filename.endswith('.pkl')]
-
-# Extract the df_number from existing files
-existing_df_numbers = [int(filename.split('_')[1].split('.')[0]) for filename in existing_files]
-
-# Determine the highest df_number
-latest_df_number = max(existing_df_numbers, default=0)
-
-# Load the DataFrame with the latest df_number
-df_new = pd.read_pickle(f'{interim_dir}dataframe_{latest_df_number}.pkl')
+df_new = manage.load_from_file(load_directory, load_base_filename, load_file_extension, load_file_number)
 
 # ------------------------------------------------------
 # Preprocess
@@ -200,23 +190,10 @@ X_train_processed.shape, X_test_processed.shape
 # Saving data frames, transformers, parameters 
 # ------------------------------------------------------
 
-# Define directories
-processed_dir = '../../data/processed/'
-params_dir = '../../src/parameters/'
-
-# Get a list of existing pickle files
-existing_files_processed = [filename for filename in os.listdir(processed_dir) if filename.endswith('.pkl')]
-# Extract the df_number from existing files
-existing_processed_numbers = [int(filename.split('_')[4].split('.')[0]) for filename in existing_files_processed]
-# Determine the highest df_number
-latest_processed_number = max(existing_processed_numbers, default=0) + 1
-
-# Get a list of existing pickle files
-existing_files_params = [filename for filename in os.listdir(params_dir) if filename.endswith('.yaml')]
-# Extract the df_number from existing files
-existing_params_numbers = [int(filename.split('_')[3].split('.')[0]) for filename in existing_files_params]
-# Determine the highest df_number
-latest_params_number = max(existing_params_numbers, default=0) + 1
+save_params_dir = '../../src/parameters/'
+save_base_filename_params = 'master_params_df'
+save_file_extension_params = '.yaml'
+save_file_number_params = None
 
 # Convert arrays to DataFrame
 X_train_processed_df = pd.DataFrame(X_train_processed, columns=X_train_resampled.columns)
@@ -224,21 +201,26 @@ y_train_resampled_df = pd.DataFrame(y_train_resampled)
 X_test_processed_df = pd.DataFrame(X_test_processed, columns=X_test_resampled.columns)
 y_test_resampled_df = pd.DataFrame(y_test_resampled)
 
-# Save as pickle files latest
-# X_train_file = f'{processed_dir}X_train_processed_df_{latest_processed_number}.pkl'
-# y_train_file = f'{processed_dir}y_train_processed_df_{latest_processed_number}.pkl'
-# X_test_file = f'{processed_dir}X_test_processed_df_{latest_processed_number}.pkl'
-# y_test_file = f'{processed_dir}y_test_processed_df_{latest_processed_number}.pkl'
 
-# X_train_processed_df.to_pickle(X_train_file)
-# y_train_resampled_df.to_pickle(y_train_file)
-# X_test_processed_df.to_pickle(X_test_file)
-# y_test_resampled_df.to_pickle(y_test_file)
+save_processed_dir = '../../data/processed/'
+save_base_filenames_processed = dict(X_train_processed_df = X_train_processed_df,
+                                     y_train_processed_df = y_train_resampled_df,
+                                     X_test_processed_df = X_test_processed_df,
+                                     y_test_processed_df = y_test_resampled_df)
+save_file_extension_processed = '.pkl'
 
-# Save master_params along with dataset number and ColumnTransformer to a YAML file
-master_params_file = f'{params_dir}master_params_df_{latest_processed_number}.yaml'
+# Get the max number for processed files
+_, max_number_processed = manage.get_file_list_and_max_number(save_processed_dir, save_file_extension_processed)
+next_file_number = max_number_processed + 1
+
+save_file_number_processed = next_file_number
+
 
 #----------------------------------------------------------------------------------------
-# with open(master_params_file, 'w') as f:
-#    yaml.dump({'dataset_number': latest_df_number, 'master_params': master_params}, f)
+# manage.save_to_file(master_params, save_params_dir, save_base_filename1, save_file_extension_params, save_file_number_params)
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+# for base_filename, data in save_base_filenames_processed.items():
+#     manage.save_to_file(data, save_processed_dir, base_filename, save_file_extension_processed, save_file_number_processed)
 #----------------------------------------------------------------------------------------
